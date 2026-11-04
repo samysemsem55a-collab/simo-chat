@@ -1,0 +1,6 @@
+{
+  "name": "شات العرب مصر | Arab Egypt Chat",
+  "description": "تطبيق شات العرب والمجالس الصوتية المتكامل: محادثات خاصة ورسائل صوتية، عضويات VIP، هدايا فاخرة، ألعاب ومسابقات ثقافية، وسحب الأرباح.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

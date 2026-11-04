@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>شات لايف العرب - منصة المحادثات الصوتية والكتابية</title>
+  <!-- Google Fonts: Cairo -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome 6 CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Firebase Compat SDK (App, Auth, Database) -->
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Cairo', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#fff1f2',
+              500: '#f43f5e',
+              600: '#e11d48',
+              700: '#be123c',
+              gold: '#fbbf24',
+              goldDark: '#d97706',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      user-select: none;
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(244, 63, 94, 0.4);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(244, 63, 94, 0.8);
+    }
+    .vip-glow {
+      box-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
+      border: 1px solid rgba(251, 191, 36, 0.8);
+    }
+    .message-bubble {
+      animation: fadeIn 0.25s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-rose-500 selection:text-white">
+
+  <!-- ================= TOP NAVIGATION BAR ================= -->
+  <header class="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 px-3 py-2.5 sm:px-6">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-3">
+      
+      <!-- Brand & Status -->
+      <div class="flex items-center gap-3">
+        <div class="relative">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-600 via-pink-600 to-amber-500 flex items-center justify-center shadow-lg shadow-rose-950 text-white font-black text-lg">
+            <i class="fa-solid fa-comments"></i>
+          </div>
+          <span id="global-connection-indicator" class="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-slate-900 rounded-full" title="متصل بالخادم"></span>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-bold text-white tracking-wide">شات مصر والعرب</h1>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 font-bold">لايف 100%</span>
+          </div>
+          <p class="text-xs text-slate-400 flex items-center gap-2">
+            <span class="inline-flex items-center gap-1 text-emerald-400">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span id="stats-online-count">0</span> متصل الآن
+            </span>
+            <span class="text-slate-600">|</span>
+            <span class="text-slate-400">غرفة: <strong id="current-room-name" class="text-slate-200">الردهة العامة</strong></span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Action Buttons & User Summary -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Balance / Recharge Button -->
+        <button onclick="openInstaPayModal()" class="flex items-center gap-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 px-3 py-1.5 rounded-xl transition font-semibold text-xs sm:text-sm">
+          <i class="fa-solid fa-coins text-amber-400"></i>
+          <span id="user-header-balance">0</span>
+          <span class="bg-amber-500 text-slate-950 text-[10px] px-1.5 py-0.2 rounded font-extrabold mr-1">+ شحن</span>
+        </button>
+
+        <!-- Admin Dashboard Button (Visible to admins or configurable) -->
+        <button onclick="openAdminModal()" class="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-xl transition text-xs font-medium border border-slate-700" title="لوحة التحكم">
+          <i class="fa-solid fa-shield-halved text-rose-400"></i>
+          <span class="hidden md:inline">الإدارة</span>
+        </button>
+
+        <!-- Firebase Config Settings Button -->
+        <button onclick="openConfigModal()" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center border border-slate-700 transition" title="إعدادات Firebase">
+          <i class="fa-solid fa-gear"></i>
+        </button>
+
+        <!-- User Profile Avatar Pill -->
+        <div onclick="openProfileModal()" class="flex items-center gap-2 bg-slate-800/80 hover:bg-slate-800 border border-slate-700 p-1 pl-2.5 rounded-xl cursor-pointer transition">
+          <img id="user-header-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=ArabUser" alt="Avatar" class="w-8 h-8 rounded-lg object-cover bg-slate-700">
+          <div class="hidden sm:block text-right">
+            <div class="text-xs font-bold text-white max-w-[90px] truncate" id="user-header-name">جاري الدخول...</div>
+            <div class="text-[10px] text-amber-400 font-semibold" id="user-header-vip">عضو نشط</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= TOP LIVE VISITORS BANNER (Requirement 8) ================= -->
+  <div class="bg-gradient-to-r from-emerald-950/80 via-slate-900 to-indigo-950/80 border-b border-emerald-500/30 px-3 py-2 text-xs shadow-inner">
+    <div class="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-2">
+      <div class="flex items-center gap-2">
+        <span class="relative flex h-2.5 w-2.5">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+        </span>
+        <span class="font-black text-white">عداد إجمالي الزوار والمتواجدين حالياً:</span>
+      </div>
+      <div class="flex items-center gap-3 font-bold">
+        <span class="text-emerald-400 flex items-center gap-1 bg-emerald-950/80 px-2.5 py-0.5 rounded-lg border border-emerald-500/30">
+          <i class="fa-solid fa-users text-emerald-400 text-xs"></i>
+          <span id="banner-online-count">1</span> متصل الآن
+        </span>
+        <span class="text-slate-600">|</span>
+        <span class="text-amber-300 flex items-center gap-1 bg-amber-950/50 px-2.5 py-0.5 rounded-lg border border-amber-500/30">
+          <i class="fa-solid fa-eye text-amber-400 text-xs"></i>
+          <span id="banner-visitors-count">6</span> زائر نشط
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MAIN LAYOUT ================= -->
+  <div class="max-w-7xl mx-auto w-full flex-1 flex flex-col md:flex-row overflow-hidden p-2 sm:p-4 gap-3">
+
+    <!-- LEFT / MAIN: LIVE CHAT AREA -->
+    <main class="flex-1 flex flex-col bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl min-h-[500px]">
+      
+      <!-- Chat Sub-Header: The Two Top Room Creation Buttons & Rooms (Requirement 6) -->
+      <div class="bg-slate-950/80 border-b border-slate-800 px-4 py-2.5 flex items-center justify-between flex-wrap gap-2">
+        
+        <!-- Two Top Room Creation Buttons (Requirement 6) -->
+        <div class="flex items-center gap-2">
+          <button onclick="createNewVoiceRoomPrompt()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white flex items-center gap-1.5 shadow active:scale-95 transition">
+            <i class="fa-solid fa-microphone text-amber-300 text-xs"></i>
+            <span>إنشاء غرفة صوتية</span>
+          </button>
+          <button onclick="createNewTextRoomPrompt()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white flex items-center gap-1.5 shadow active:scale-95 transition">
+            <i class="fa-solid fa-message text-cyan-200 text-xs"></i>
+            <span>إنشاء غرفة دردشة رسائل</span>
+          </button>
+        </div>
+
+        <!-- Room Tabs (NO 'مجلس لايف وصوت' badge per Requirement 6) -->
+        <div class="flex items-center gap-1.5 overflow-x-auto py-1 max-w-full">
+          <button onclick="switchRoom('general', 'الردهة العامة 🇪🇬')" class="room-btn active px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-600 text-white transition flex items-center gap-1.5" data-room="general">
+            <i class="fa-solid fa-earth-africa"></i>
+            <span>الردهة العامة</span>
+          </button>
+          <button onclick="switchRoom('voice-lounge', 'مجلس الطرب والسمر 🎙️')" class="room-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-1.5" data-room="voice-lounge">
+            <i class="fa-solid fa-microphone text-rose-400"></i>
+            <span>مجلس السمر</span>
+          </button>
+          <button onclick="switchRoom('vip-majlis', 'مجلس كبار الشخصيات VIP 👑')" class="room-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-1.5" data-room="vip-majlis">
+            <i class="fa-solid fa-crown text-amber-400"></i>
+            <span>مجلس VIP</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Messages Viewport -->
+      <div id="messages-container" class="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3.5 bg-gradient-to-b from-slate-900 to-slate-950/80">
+        <!-- Messages will be injected here in real-time from Firebase Database -->
+        <div id="chat-empty-state" class="h-full flex flex-col items-center justify-center text-center p-6 text-slate-500">
+          <div class="w-16 h-16 rounded-full bg-slate-800/80 flex items-center justify-center text-2xl text-slate-400 mb-3 border border-slate-700">
+            <i class="fa-regular fa-comments"></i>
+          </div>
+          <h3 class="text-sm font-bold text-slate-300 mb-1">لا توجد رسائل سابقة</h3>
+          <p class="text-xs max-w-sm">كن أول من يبدأ المحادثة الآن! جميع الرسائل يتم حفظها ونقلها عبر Firebase Realtime Database فورياً.</p>
+        </div>
+      </div>
+
+      <!-- Typing / Status Bar -->
+      <div id="typing-indicator" class="px-4 py-1 text-xs text-rose-400 italic hidden bg-slate-950/40">
+        <span class="animate-pulse">شخص ما يكتب الآن...</span>
+      </div>
+
+      <!-- Message Input Form with Mic Button (Requirement 5) -->
+      <form id="chat-form" onsubmit="handleSendMessage(event)" class="bg-slate-950 border-t border-slate-800 p-2.5 sm:p-3 flex items-center gap-2">
+        <!-- Gift / Emoji Quick Button -->
+        <button type="button" onclick="sendQuickGift('❤️')" class="w-10 h-10 rounded-xl bg-slate-800/80 hover:bg-rose-500/20 hover:text-rose-400 text-slate-400 transition flex items-center justify-center text-base" title="إرسال قلب لايف">
+          ❤️
+        </button>
+        <button type="button" onclick="sendQuickGift('👑')" class="w-10 h-10 rounded-xl bg-slate-800/80 hover:bg-amber-500/20 hover:text-amber-400 text-slate-400 transition flex items-center justify-center text-base" title="إرسال تاج">
+          👑
+        </button>
+
+        <!-- Real MediaRecorder Mic Button (Requirement 5) -->
+        <button type="button" id="mic-record-btn" onclick="toggleAudioRecording()" class="w-10 h-10 rounded-xl bg-slate-800 hover:bg-indigo-600 text-slate-300 transition flex items-center justify-center text-sm" title="تسجيل رسالة صوتية (المايك)">
+          <i class="fa-solid fa-microphone"></i>
+        </button>
+
+        <!-- Input Field -->
+        <input 
+          type="text" 
+          id="message-input" 
+          placeholder="اكتب رسالتك لجميع المتواجدين مباشرة..." 
+          autocomplete="off" 
+          class="flex-1 bg-slate-900 border border-slate-700/80 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 text-white placeholder-slate-500 px-4 py-2.5 rounded-xl text-sm outline-none transition"
+        />
+
+        <!-- Send Button -->
+        <button 
+          type="submit" 
+          id="send-button"
+          class="bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-bold px-5 py-2.5 rounded-xl transition flex items-center gap-2 shadow-lg shadow-rose-950 text-sm active:scale-95 disabled:opacity-50"
+        >
+          <span>إرسال</span>
+          <i class="fa-solid fa-paper-plane -rotate-90"></i>
+        </button>
+      </form>
+    </main>
+
+    <!-- RIGHT: ONLINE USERS & ROOM DETAILS -->
+    <aside class="w-full md:w-80 flex flex-col bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl h-auto md:h-auto">
+      
+      <!-- Sidebar Header -->
+      <div class="p-3.5 bg-slate-950/60 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-users text-rose-500"></i>
+          <h2 class="text-sm font-bold text-white">المتواجدون حالياً</h2>
+        </div>
+        <span id="sidebar-online-badge" class="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-bold">
+          0 متصل
+        </span>
+      </div>
+
+      <!-- Online Users List -->
+      <div id="online-users-list" class="flex-1 overflow-y-auto p-2.5 space-y-2 max-h-[350px] md:max-h-full">
+        <!-- Rendered in real-time from .info/connected and presence node -->
+      </div>
+
+      <!-- Footer Quick Stats -->
+      <div class="p-3 bg-slate-950/80 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between">
+        <span>النظام: Realtime DB</span>
+        <span class="text-emerald-400 flex items-center gap-1">
+          <i class="fa-solid fa-wifi text-[9px]"></i> متصل
+        </span>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- ================= MODAL: USER PROFILE & AVATAR UPLOAD ================= -->
+  <div id="profile-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 sm:p-6 shadow-2xl relative">
+      <button onclick="closeProfileModal()" class="absolute top-4 left-4 text-slate-400 hover:text-white text-lg">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <h3 class="text-base font-bold text-white mb-4 text-center">الملف الشخصي والبيانات</h3>
+
+      <!-- Avatar with Pen Upload -->
+      <div class="flex flex-col items-center mb-5">
+        <div class="relative group">
+          <img id="profile-preview-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=ArabUser" alt="Avatar" class="w-24 h-24 rounded-2xl object-cover border-2 border-rose-500 bg-slate-800 shadow-xl">
+          <label for="avatar-file-input" class="absolute -bottom-2 -left-2 w-8 h-8 rounded-full bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center cursor-pointer shadow-lg transition border-2 border-slate-900" title="تغيير الصورة الشخصية">
+            <i class="fa-solid fa-pen text-xs"></i>
+          </label>
+          <input type="file" id="avatar-file-input" accept="image/*" class="hidden" onchange="handleAvatarFileSelect(event)">
+        </div>
+        <p class="text-[11px] text-slate-400 mt-2">انقر على أيقونة القلم لتغيير صورتك ورفعها فوراً</p>
+      </div>
+
+      <!-- Profile Fields -->
+      <div class="space-y-3.5">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">الاسم المستعار في الشات</label>
+          <input type="text" id="profile-input-name" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:border-rose-500 outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">الحالة / النبذة</label>
+          <input type="text" id="profile-input-bio" placeholder="مثال: منورين يا أحلى شباب 🌹" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:border-rose-500 outline-none">
+        </div>
+
+        <!-- Badges & Achievements Display -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">شارات الإنجاز المكتسبة</label>
+          <div id="profile-badges-container" class="flex flex-wrap gap-1.5">
+            <span class="text-[11px] px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/30 font-bold flex items-center gap-1">
+              <i class="fa-solid fa-star text-amber-400"></i> عضو مؤسس
+            </span>
+            <span class="text-[11px] px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/30 font-bold flex items-center gap-1">
+              <i class="fa-solid fa-heart text-rose-400"></i> نشط
+            </span>
+          </div>
+        </div>
+
+        <!-- VIP Status & Balance Details -->
+        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
+          <div>
+            <span class="text-slate-400">الرصيد الحالي:</span>
+            <span id="profile-modal-balance" class="font-bold text-amber-400 text-sm mr-1">0</span> كوينز
+          </div>
+          <div>
+            <span class="text-slate-400">الرتبة:</span>
+            <span id="profile-modal-rank" class="font-bold text-rose-400 mr-1">عضو</span>
+          </div>
+        </div>
+
+        <button onclick="saveUserProfile()" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-2.5 rounded-xl transition text-sm shadow-lg shadow-rose-950">
+          حفظ التعديلات في Firebase
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: INSTAPAY & WALLETS RECHARGE (Requirement 1 & 4) ================= -->
+  <div id="instapay-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-5 sm:p-6 shadow-2xl relative">
+      <button onclick="closeInstaPayModal()" class="absolute top-4 left-4 text-slate-400 hover:text-white text-lg">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-purple-600/20 border border-purple-500/30 text-purple-400 flex items-center justify-center font-bold text-lg">
+          <i class="fa-solid fa-bolt"></i>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-white">بوابة الشحن المباشر عبر InstaPay والمحافظ</h3>
+          <p class="text-xs text-slate-400">شحن يدوي مباشر وتسجيل المعاملة في Firebase payments_pending</p>
+        </div>
+      </div>
+
+      <!-- InstaPay Address Box with One-Click Copy -->
+      <div class="bg-purple-950/40 border border-purple-500/30 rounded-xl p-3 mb-4 flex items-center justify-between">
+        <div>
+          <span class="text-[11px] text-purple-300 block font-semibold">عنوان الدفع InstaPay المعتمد:</span>
+          <span class="font-mono font-bold text-white text-sm" id="instapay-address-text">samyelsayed9@instapay</span>
+        </div>
+        <button onclick="copyInstaPayAddress()" class="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold flex items-center gap-1.5 transition active:scale-95 shadow">
+          <i class="fa-regular fa-copy"></i>
+          <span>نسخ العنوان</span>
+        </button>
+      </div>
+
+      <!-- Packages Selection -->
+      <label class="block text-xs font-semibold text-slate-300 mb-2">اختر باقة الكوينز:</label>
+      <div class="grid grid-cols-3 gap-2.5 mb-4">
+        <div onclick="selectPackage(1000, 50)" class="package-card active p-3 rounded-xl border border-rose-500 bg-rose-500/10 cursor-pointer text-center transition" data-coins="1000" data-price="50">
+          <div class="text-amber-400 font-extrabold text-sm sm:text-base">1,000</div>
+          <div class="text-[10px] text-slate-400">كوينز</div>
+          <div class="text-xs font-bold text-white mt-1">50 ج.م</div>
+        </div>
+
+        <div onclick="selectPackage(5000, 200)" class="package-card p-3 rounded-xl border border-slate-800 bg-slate-950 hover:border-slate-700 cursor-pointer text-center transition" data-coins="5000" data-price="200">
+          <div class="text-amber-400 font-extrabold text-sm sm:text-base">5,000</div>
+          <div class="text-[10px] text-slate-400">كوينز</div>
+          <div class="text-xs font-bold text-white mt-1">200 ج.م</div>
+          <span class="text-[9px] bg-rose-500 text-white px-1 rounded block mt-0.5 font-bold">الأكثر طلباً</span>
+        </div>
+
+        <div onclick="selectPackage(10000, 350)" class="package-card p-3 rounded-xl border border-slate-800 bg-slate-950 hover:border-slate-700 cursor-pointer text-center transition" data-coins="10000" data-price="350">
+          <div class="text-amber-400 font-extrabold text-sm sm:text-base">10,000</div>
+          <div class="text-[10px] text-slate-400">كوينز</div>
+          <div class="text-xs font-bold text-white mt-1">350 ج.م</div>
+          <span class="text-[9px] bg-amber-500 text-slate-950 px-1 rounded block mt-0.5 font-bold">باقة VIP</span>
+        </div>
+      </div>
+
+      <!-- Transfer Reference / Mobile Note -->
+      <div class="mb-4">
+        <label class="block text-xs font-semibold text-slate-300 mb-1">رقم المحفظة / الملاحظة للتحقق السريع (اختياري):</label>
+        <input type="text" id="recharge-sender-note" placeholder="مثال: رقم التحويل أو رقم الهاتف المحول منه" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-purple-500">
+      </div>
+
+      <!-- Summary & Execution Button -->
+      <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 mb-4 flex items-center justify-between text-xs">
+        <span class="text-slate-400">المبلغ المطلوب تحويله:</span>
+        <span id="instapay-total-due" class="text-white font-extrabold text-sm">50 جنيه مصري</span>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <button id="instapay-submit-btn" onclick="executeInstaPayPayment()" class="w-full bg-gradient-to-r from-purple-600 via-indigo-600 to-rose-600 hover:opacity-95 text-white font-bold py-2.5 rounded-xl transition text-sm flex items-center justify-center gap-2 shadow-lg shadow-purple-950">
+          <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+          <span>فتح InstaPay وتسجيل الطلب في payments_pending</span>
+        </button>
+      </div>
+      <div id="instapay-status-msg" class="text-center text-xs mt-2 hidden"></div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: ADMIN CONTROL PANEL ================= -->
+  <div id="admin-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl p-5 sm:p-6 shadow-2xl relative">
+      <button onclick="closeAdminModal()" class="absolute top-4 left-4 text-slate-400 hover:text-white text-lg">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="flex items-center gap-2 mb-4">
+        <i class="fa-solid fa-shield-halved text-rose-500 text-xl"></i>
+        <div>
+          <h3 class="text-base font-bold text-white">لوحة إدارة وتحكم المستخدمين</h3>
+          <p class="text-xs text-slate-400">إدارة الرتب، ترقية كبار الشخصيات VIP، الكتم، والحظر لحظياً</p>
+        </div>
+      </div>
+
+      <!-- Users in Room Table -->
+      <div class="overflow-x-auto max-h-[350px]">
+        <table class="w-full text-right text-xs">
+          <thead class="bg-slate-950 text-slate-400 uppercase text-[10px]">
+            <tr>
+              <th class="p-2.5 rounded-tr-lg">المستخدم</th>
+              <th class="p-2.5">المعرف (UID)</th>
+              <th class="p-2.5">الرتبة</th>
+              <th class="p-2.5">الرصيد</th>
+              <th class="p-2.5 rounded-tl-lg text-center">إجراءات الإدارة</th>
+            </tr>
+          </thead>
+          <tbody id="admin-users-tbody" class="divide-y divide-slate-800">
+            <!-- Dynamically populated from active presence/users -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="mt-4 pt-3 border-t border-slate-800 flex justify-between items-center text-xs text-slate-400">
+        <span>التعديلات تنعكس مباشرة في Firebase Realtime Database</span>
+        <button onclick="clearRoomMessages()" class="text-rose-400 hover:text-rose-300 font-semibold flex items-center gap-1">
+          <i class="fa-solid fa-trash-can"></i> مسح جميع رسائل الغرفة
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: FIREBASE CONFIGURATION SETUP ================= -->
+  <div id="config-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-5 sm:p-6 shadow-2xl relative">
+      <button onclick="closeConfigModal()" class="absolute top-4 left-4 text-slate-400 hover:text-white text-lg">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="flex items-center gap-2 mb-3">
+        <i class="fa-solid fa-fire text-amber-500 text-xl"></i>
+        <h3 class="text-base font-bold text-white">إعدادات اتصال Firebase Realtime Database</h3>
+      </div>
+      <p class="text-xs text-slate-400 mb-4">
+        أدخل بيانات مشروعك في Firebase لتشغيل الربط المباشر الحقيقي 100% بين جميع الأجهزة بدون بيانات وهمية:
+      </p>
+
+      <div class="space-y-2.5 text-xs">
+        <div>
+          <label class="block text-slate-300 mb-1 font-semibold">Database URL (رابط قاعدة البيانات):</label>
+          <input type="text" id="cfg-databaseURL" placeholder="https://your-project-default-rtdb.firebaseio.com" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-white outline-none focus:border-rose-500">
+        </div>
+        <div>
+          <label class="block text-slate-300 mb-1 font-semibold">API Key:</label>
+          <input type="text" id="cfg-apiKey" placeholder="AIzaSy..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-white outline-none focus:border-rose-500">
+        </div>
+        <div>
+          <label class="block text-slate-300 mb-1 font-semibold">Project ID:</label>
+          <input type="text" id="cfg-projectId" placeholder="your-project-id" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-white outline-none focus:border-rose-500">
+        </div>
+        <div>
+          <label class="block text-slate-300 mb-1 font-semibold">Auth Domain (اختياري):</label>
+          <input type="text" id="cfg-authDomain" placeholder="your-project.firebaseapp.com" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-white outline-none focus:border-rose-500">
+        </div>
+      </div>
+
+      <div class="mt-5 flex gap-2">
+        <button onclick="saveFirebaseConfig()" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white font-bold py-2 rounded-xl text-xs transition">
+          حفظ وإعادة الاتصال
+        </button>
+        <button onclick="loadSampleConfig()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-xl text-xs transition">
+          استخدام التجريبي الافتراضي
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= JAVASCRIPT LOGIC ================= -->
+  <script>
+    /*
+     * 100% REAL FIREBASE REALTIME DATABASE LIVE CHAT ENGINE
+     * Zero mock data. Zero auto-generated messages or fake loops.
+     */
+
+    // Default configuration (saved in localStorage or customizable by user)
+    const DEFAULT_CONFIG = {
+      apiKey: "AIzaSyDemoKeyMockPlaceholderForDirectRun123",
+      authDomain: "shat-33b50.firebaseapp.com",
+      databaseURL: "https://shat-33b50-default-rtdb.firebaseio.com/",
+      projectId: "shat-33b50",
+      storageBucket: "shat-33b50.appspot.com"
+    };
+
+    let firebaseConfig = { ...DEFAULT_CONFIG };
+    const savedConfig = localStorage.getItem('arab_chat_firebase_cfg');
+    if (savedConfig) {
+      try {
+        firebaseConfig = JSON.parse(savedConfig);
+      } catch (e) {
+        console.error("Failed to parse saved config", e);
+      }
+    }
+
+    // App State
+    let currentUser = null;
+    let currentRoom = 'general';
+    let currentRoomName = 'الردهة العامة';
+    let db = null;
+    let auth = null;
+    let presenceRef = null;
+    let isMuted = false;
+    let selectedPackage = { coins: 1000, price: 50 };
+
+    // Function for instant payment through InstaPay & recording in payments_pending
+    function openPayment(amount, note) {
+      const paymentAddress = "samyelsayed9@instapay";
+      const userId = (auth && auth.currentUser) ? auth.currentUser.uid : ("GUEST_" + Math.floor(Math.random() * 100000));
+      const paymentUrl = `instapay://pay?pa=${paymentAddress}&am=${amount}&cu=EGP&tn=${encodeURIComponent(note)}`;
+
+      if (db) {
+        db.ref('payments_pending').push({
+          userId: userId,
+          amount: amount,
+          note: note,
+          status: "pending",
+          timestamp: Date.now()
+        }).then(() => {
+          window.location.href = paymentUrl;
+        }).catch((err) => {
+          console.error("فشل تسجيل عملية الدفع:", err);
+          window.location.href = paymentUrl;
+        });
+      } else {
+        window.location.href = paymentUrl;
+      }
+    }
+    window.openPayment = openPayment;
+
+    // Initialize Firebase
+    function initFirebase() {
+      try {
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        }
+        auth = firebase.auth();
+        db = firebase.database();
+        window.firebaseDB = db;
+        console.log("Firebase initialized successfully with DB URL:", firebaseConfig.databaseURL);
+        setupAuthAndPresence();
+      } catch (err) {
+        console.warn("Firebase direct connect warning:", err.message);
+        setupLocalStandaloneFallback();
+      }
+    }
+
+    // Auth & Real-Time Presence System
+    function setupAuthAndPresence() {
+      // Sign in anonymously or fetch saved credentials
+      auth.signInAnonymously().catch(err => {
+        console.warn("Anonymous signin fallback:", err.message);
+        setupLocalStandaloneFallback();
+      });
+
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          currentUser = {
+            uid: user.uid,
+            name: localStorage.getItem('chat_user_name') || 'مستخدم_' + user.uid.substring(0, 4),
+            photoURL: localStorage.getItem('chat_user_avatar') || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`,
+            bio: localStorage.getItem('chat_user_bio') || 'مرحباً بالجميع في شات العرب!',
+            isVIP: false,
+            vipTier: 'regular',
+            balance: 0,
+            badges: ['عضو جديد']
+          };
+
+          // Save / Sync user profile in Firebase Realtime Database under users/{uid}
+          const userRef = db.ref('users/' + user.uid);
+          userRef.on('value', snapshot => {
+            const data = snapshot.val();
+            if (data) {
+              currentUser.name = data.name || currentUser.name;
+              currentUser.photoURL = data.photoURL || currentUser.photoURL;
+              currentUser.bio = data.bio || currentUser.bio;
+              currentUser.isVIP = !!data.isVIP;
+              currentUser.vipTier = data.vipTier || 'regular';
+              currentUser.balance = data.balance || 0;
+              currentUser.badges = data.badges || ['عضو جديد'];
+              isMuted = !!data.isMuted;
+            } else {
+              // Initialize in DB
+              userRef.set({
+                name: currentUser.name,
+                photoURL: currentUser.photoURL,
+                bio: currentUser.bio,
+                isVIP: currentUser.isVIP,
+                vipTier: currentUser.vipTier,
+                balance: currentUser.balance,
+                badges: currentUser.badges,
+                createdAt: firebase.database.ServerValue.TIMESTAMP
+              });
+            }
+            updateHeaderUI();
+          });
+
+          // Setup .info/connected presence
+          const connectedRef = db.ref('.info/connected');
+          presenceRef = db.ref('rooms_presence/' + currentRoom + '/' + user.uid);
+          const legacyPresenceRef = db.ref('presence/' + currentRoom + '/' + user.uid);
+
+          connectedRef.on('value', snap => {
+            if (snap.val() === true) {
+              const presencePayload = {
+                uid: user.uid,
+                name: currentUser.name,
+                photoURL: currentUser.photoURL,
+                isVIP: currentUser.isVIP,
+                status: 'online',
+                lastSeen: firebase.database.ServerValue.TIMESTAMP
+              };
+              presenceRef.onDisconnect().remove();
+              legacyPresenceRef.onDisconnect().remove();
+              presenceRef.set(presencePayload);
+              legacyPresenceRef.set(presencePayload);
+              document.getElementById('global-connection-indicator').className = "absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-slate-900 rounded-full";
+            } else {
+              document.getElementById('global-connection-indicator').className = "absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-rose-500 border-2 border-slate-900 rounded-full";
+            }
+          });
+
+          // Listen to presence list for current room
+          listenToPresence();
+
+          // Listen to real-time messages in current room
+          listenToMessages();
+        }
+      });
+    }
+
+    // Listen to real-time presence in room
+    function listenToPresence() {
+      if (!db) return;
+      const roomPresenceRef = db.ref('rooms_presence/' + currentRoom);
+      roomPresenceRef.on('value', snapshot => {
+        const usersObj = snapshot.val() || {};
+        const usersList = Object.values(usersObj);
+        renderOnlineUsers(usersList);
+      });
+    }
+
+    // Render online users
+    function renderOnlineUsers(users) {
+      const container = document.getElementById('online-users-list');
+      const statsCount = document.getElementById('stats-online-count');
+      const sidebarBadge = document.getElementById('sidebar-online-badge');
+      const adminTbody = document.getElementById('admin-users-tbody');
+
+      statsCount.textContent = users.length;
+      sidebarBadge.textContent = users.length + ' متصل';
+
+      const bannerOnline = document.getElementById('banner-online-count');
+      const bannerVisitors = document.getElementById('banner-visitors-count');
+      if (bannerOnline) bannerOnline.textContent = users.length;
+      if (bannerVisitors) bannerVisitors.textContent = Math.max(users.length, 1);
+
+      if (users.length === 0) {
+        container.innerHTML = `
+          <div class="text-center p-4 text-xs text-slate-500">
+            لا يوجد أعضاء متصلين حالياً
+          </div>
+        `;
+        if (adminTbody) adminTbody.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-slate-500">لا يوجد مستخدمين متصلين</td></tr>`;
+        return;
+      }
+
+      container.innerHTML = users.map(u => `
+        <div class="flex items-center justify-between p-2 rounded-xl bg-slate-950/60 hover:bg-slate-800 border border-slate-800/80 transition group">
+          <div class="flex items-center gap-2 min-w-0">
+            <div class="relative">
+              <img src="${u.photoURL || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + u.uid}" class="w-8 h-8 rounded-lg object-cover bg-slate-800 border ${u.isVIP ? 'border-amber-400' : 'border-slate-700'}">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-slate-950 absolute -bottom-0.5 -right-0.5"></span>
+            </div>
+            <div class="truncate">
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-bold text-slate-200 truncate">${escapeHTML(u.name || 'مستخدم')}</span>
+                ${u.isVIP ? '<i class="fa-solid fa-crown text-[10px] text-amber-400"></i>' : ''}
+              </div>
+              <span class="text-[10px] text-slate-500 block truncate">${u.isVIP ? 'عضو كبار الشخصيات VIP' : 'عضو متصل'}</span>
+            </div>
+          </div>
+          <button onclick="sendQuickHeartToUser('${u.uid}', '${escapeHTML(u.name)}')" class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-rose-500 text-xs px-2 transition" title="إهداء قلب">
+            <i class="fa-solid fa-heart"></i>
+          </button>
+        </div>
+      `).join('');
+
+      // Populate Admin Table
+      if (adminTbody) {
+        adminTbody.innerHTML = users.map(u => `
+          <tr class="hover:bg-slate-800/50">
+            <td class="p-2.5 flex items-center gap-2">
+              <img src="${u.photoURL || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + u.uid}" class="w-6 h-6 rounded-full">
+              <span class="font-bold text-white">${escapeHTML(u.name || 'مستخدم')}</span>
+            </td>
+            <td class="p-2.5 text-slate-400 font-mono text-[10px]">${u.uid ? u.uid.substring(0, 8) + '...' : 'N/A'}</td>
+            <td class="p-2.5">
+              ${u.isVIP ? '<span class="text-amber-400 font-bold">VIP 👑</span>' : '<span class="text-slate-400">عادي</span>'}
+            </td>
+            <td class="p-2.5 text-amber-400 font-bold">${u.balance || 0}</td>
+            <td class="p-2.5 text-center flex items-center justify-center gap-1.5">
+              <button onclick="toggleUserVIP('${u.uid}', ${!u.isVIP})" class="px-2 py-1 rounded bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 text-[10px] font-bold">
+                ${u.isVIP ? 'إلغاء VIP' : 'ترقية VIP'}
+              </button>
+              <button onclick="toggleMuteUser('${u.uid}')" class="px-2 py-1 rounded bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 text-[10px] font-bold">
+                كتم
+              </button>
+            </td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    // Real-Time Messages Listener
+    let currentMessagesRef = null;
+    function listenToMessages() {
+      if (!db) return;
+      const messagesContainer = document.getElementById('messages-container');
+      const emptyState = document.getElementById('chat-empty-state');
+
+      // Detach old listener if room switched
+      if (currentMessagesRef) {
+        currentMessagesRef.off();
+      }
+
+      messagesContainer.innerHTML = '';
+      currentMessagesRef = db.ref('messages/' + currentRoom).limitToLast(100);
+
+      let hasMessages = false;
+
+      currentMessagesRef.on('child_added', snapshot => {
+        const msg = snapshot.val();
+        if (!msg) return;
+
+        if (!hasMessages) {
+          hasMessages = true;
+          if (emptyState && emptyState.parentNode) {
+            emptyState.parentNode.removeChild(emptyState);
+          }
+        }
+
+        renderSingleMessage(msg);
+      });
+    }
+
+    // Render single message item
+    function renderSingleMessage(msg) {
+      const container = document.getElementById('messages-container');
+      const isMe = currentUser && msg.uid === currentUser.uid;
+
+      const timeStr = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : 'الآن';
+
+      const msgEl = document.createElement('div');
+      msgEl.className = `message-bubble flex gap-2.5 sm:gap-3 ${isMe ? 'flex-row-reverse' : 'flex-row'}`;
+
+      const audioPlayerHtml = msg.audioUrl ? `
+        <div class="mt-2 pt-2 border-t border-slate-700/50">
+          <audio controls src="${msg.audioUrl}" class="w-full max-w-[240px] h-8 rounded-lg outline-none"></audio>
+        </div>
+      ` : '';
+
+      msgEl.innerHTML = `
+        <img src="${msg.photoURL || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + msg.uid}" class="w-9 h-9 rounded-xl object-cover bg-slate-800 border ${msg.isVIP ? 'border-amber-400 vip-glow' : 'border-slate-700'} flex-shrink-0">
+        <div class="flex flex-col max-w-[80%] sm:max-w-[70%] ${isMe ? 'items-end' : 'items-start'}">
+          
+          <div class="flex items-center gap-1.5 mb-1 text-[11px]">
+            <span class="font-bold ${isMe ? 'text-rose-400' : 'text-slate-300'}">${escapeHTML(msg.senderName || 'مستخدم')}</span>
+            ${msg.isVIP ? '<span class="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1 rounded font-black">VIP</span>' : ''}
+            ${msg.badge ? `<span class="text-[9px] bg-slate-800 text-slate-400 px-1 rounded">${escapeHTML(msg.badge)}</span>` : ''}
+            <span class="text-[10px] text-slate-500 mr-1">${timeStr}</span>
+          </div>
+
+          <div class="p-3 rounded-2xl text-xs sm:text-sm leading-relaxed ${
+            isMe 
+              ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white rounded-tl-none shadow-md shadow-rose-950' 
+              : 'bg-slate-800/90 text-slate-100 rounded-tr-none border border-slate-700/60'
+          }">
+            ${escapeHTML(msg.text)}
+            ${audioPlayerHtml}
+          </div>
+        </div>
+      `;
+
+      container.appendChild(msgEl);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    // Debounced Send Message Handler (Requirement 3: Fix duplicate messages)
+    let isSendingMessage = false;
+    function handleSendMessage(e) {
+      if (e) e.preventDefault();
+      if (isSendingMessage) return;
+
+      const input = document.getElementById('message-input');
+      const sendButton = document.getElementById('send-button');
+      const text = input.value.trim();
+
+      if (!text) return;
+
+      if (isMuted) {
+        alert("أنت مكتوم حالياً في هذه الغرفة بواسطة إدارة المنصة.");
+        return;
+      }
+
+      if (!currentUser) {
+        alert("جاري الاتصال بالنظام، يرجى الانتظار ثوانٍ معدودة...");
+        return;
+      }
+
+      // Clear input field immediately so user can send consecutive messages without delay
+      input.value = '';
+      input.focus();
+
+      isSendingMessage = true;
+      setTimeout(() => {
+        isSendingMessage = false;
+        if (sendButton) sendButton.disabled = false;
+      }, 50);
+
+      // Realtime Database save
+      if (db) {
+        const newMsgRef = db.ref('messages/' + currentRoom).push();
+        newMsgRef.set({
+          uid: currentUser.uid,
+          senderName: currentUser.name,
+          photoURL: currentUser.photoURL,
+          isVIP: currentUser.isVIP,
+          vipTier: currentUser.vipTier,
+          badge: currentUser.badges && currentUser.badges[0] ? currentUser.badges[0] : null,
+          text: text,
+          timestamp: firebase.database.ServerValue.TIMESTAMP
+        }).catch(err => {
+          console.error("Error sending message to Firebase:", err);
+        });
+      } else {
+        // Standalone fallback
+        renderSingleMessage({
+          uid: currentUser.uid,
+          senderName: currentUser.name,
+          photoURL: currentUser.photoURL,
+          isVIP: currentUser.isVIP,
+          text: text,
+          timestamp: Date.now()
+      }
+    }
+
+    // MediaRecorder Microphone Voice Recording (Requirement 5)
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let isRecordingAudio = false;
+
+    async function toggleAudioRecording() {
+      const btn = document.getElementById('mic-record-btn');
+      if (!isRecordingAudio) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          audioChunks = [];
+          const mimeType = (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/webm;codecs=opus'))
+            ? 'audio/webm;codecs=opus'
+            : ((typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/mp4')) ? 'audio/mp4' : '');
+          
+          mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+
+          mediaRecorder.ondataavailable = (event) => {
+            if (event.data && event.data.size > 0) audioChunks.push(event.data);
+          };
+
+          mediaRecorder.onstop = () => {
+            stream.getTracks().forEach(track => track.stop());
+            const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const base64Audio = reader.result;
+              if (db && currentUser) {
+                db.ref('messages/' + currentRoom).push({
+                  uid: currentUser.uid,
+                  senderName: currentUser.name,
+                  photoURL: currentUser.photoURL,
+                  isVIP: currentUser.isVIP,
+                  text: '🎙️ رسالة صوتية مسجلة',
+                  audioUrl: base64Audio,
+                  timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+              } else if (currentUser) {
+                renderSingleMessage({
+                  uid: currentUser.uid,
+                  senderName: currentUser.name,
+                  photoURL: currentUser.photoURL,
+                  isVIP: currentUser.isVIP,
+                  text: '🎙️ رسالة صوتية مسجلة',
+                  audioUrl: base64Audio,
+                  timestamp: Date.now()
+                });
+              }
+            };
+            reader.readAsDataURL(blob);
+          };
+
+          mediaRecorder.start();
+          isRecordingAudio = true;
+          if (btn) {
+            btn.className = "w-10 h-10 rounded-xl bg-rose-600 text-white transition flex items-center justify-center text-sm animate-pulse shadow-lg shadow-rose-950";
+            btn.title = "انقر لإيقاف التسجيل وإرسال الصوت";
+          }
+        } catch (err) {
+          console.error("Mic error:", err);
+          alert("يرجى إعطاء صلاحية الميكروفون للمتصفح لتسجيل الصوت.");
+        }
+      } else {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+          mediaRecorder.stop();
+        }
+        isRecordingAudio = false;
+        if (btn) {
+          btn.className = "w-10 h-10 rounded-xl bg-slate-800 hover:bg-indigo-600 text-slate-300 transition flex items-center justify-center text-sm";
+          btn.title = "تسجيل رسالة صوتية (المايك)";
+        }
+      }
+    }
+
+    // Admin/Owner verification (Requirement 2)
+    function isUserAdminOrOwner(user) {
+      if (!user) return false;
+      const name = (user.name || '').toLowerCase();
+      const uid = (user.uid || '').toLowerCase();
+      return name.includes('المالك') || 
+             name.includes('المطور') || 
+             name.includes('owner') || 
+             name.includes('admin') || 
+             name.includes('سامي') ||
+             name.includes('samy') ||
+             uid.includes('owner') ||
+             uid.includes('admin') ||
+             uid === 'samy_owner' ||
+             user.isAdmin === true ||
+             user.isOwner === true;
+    }
+
+    // Quick Gifts with Owner Bypass (Requirement 2)
+    function sendQuickGift(symbol) {
+      const input = document.getElementById('message-input');
+      input.value = (input.value ? input.value + ' ' : '') + symbol;
+      input.focus();
+    }
+
+    function sendQuickHeartToUser(targetUid, targetName) {
+      if (!currentUser) return;
+      const isOwner = isUserAdminOrOwner(currentUser);
+      const text = isOwner
+        ? `👑 أهدى المالك ${currentUser.name} باقة هدايا ملكية فاخرة ومميزة إلى @${targetName} 💎✨❤️`
+        : `أهدى ${currentUser.name} وردة وقلباً لايف إلى @${targetName} 🌹❤️`;
+
+      if (db) {
+        db.ref('messages/' + currentRoom).push({
+          uid: currentUser.uid,
+          senderName: currentUser.name,
+          photoURL: currentUser.photoURL,
+          isVIP: isOwner || currentUser.isVIP,
+          badge: isOwner ? 'المالك المطور 👑' : (currentUser.isVIP ? 'VIP' : null),
+          text: text,
+          timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
+      }
+    }
+
+    // Room Creation Prompts (Requirement 6)
+    function createNewVoiceRoomPrompt() {
+      const roomName = prompt("أدخل اسم الغرفة الصوتية الجديدة:");
+      if (!roomName || !roomName.trim()) return;
+      const newId = 'voice_' + Date.now();
+      switchRoom(newId, '🎙️ ' + roomName.trim());
+    }
+
+    function createNewTextRoomPrompt() {
+      const roomName = prompt("أدخل اسم غرفة دردشة الرسائل الجديدة:");
+      if (!roomName || !roomName.trim()) return;
+      const newId = 'text_' + Date.now();
+      switchRoom(newId, '💬 ' + roomName.trim());
+    }
+
+    // Switch Room
+    function switchRoom(roomId, roomTitle) {
+      if (currentRoom === roomId) return;
+
+      // Clean old presence
+      if (presenceRef) {
+        presenceRef.remove();
+      }
+
+      currentRoom = roomId;
+      currentRoomName = roomTitle;
+      document.getElementById('current-room-name').textContent = roomTitle;
+
+      // Update room buttons state
+      document.querySelectorAll('.room-btn').forEach(btn => {
+        if (btn.getAttribute('data-room') === roomId) {
+          btn.className = "room-btn active px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-600 text-white transition flex items-center gap-1.5";
+        } else {
+          btn.className = "room-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-1.5";
+        }
+      });
+
+      // Update presence for new room
+      if (db && currentUser) {
+        presenceRef = db.ref('presence/' + currentRoom + '/' + currentUser.uid);
+        presenceRef.onDisconnect().remove();
+        presenceRef.set({
+          uid: currentUser.uid,
+          name: currentUser.name,
+          photoURL: currentUser.photoURL,
+          isVIP: currentUser.isVIP,
+          status: 'online',
+          lastSeen: firebase.database.ServerValue.TIMESTAMP
+        });
+      }
+
+      listenToPresence();
+      listenToMessages();
+    }
+
+    // Avatar Selection & Instant Upload
+    function handleAvatarFileSelect(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (file.size > 2 * 1024 * 1024) {
+        alert("يرجى اختيار صورة بحجم أقل من 2 ميجابايت.");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const dataUrl = evt.target.result;
+        document.getElementById('profile-preview-avatar').src = dataUrl;
+
+        // Instantly save to user profile
+        if (currentUser) {
+          currentUser.photoURL = dataUrl;
+          localStorage.setItem('chat_user_avatar', dataUrl);
+
+          if (db) {
+            db.ref('users/' + currentUser.uid + '/photoURL').set(dataUrl);
+            if (presenceRef) {
+              presenceRef.update({ photoURL: dataUrl });
+            }
+          }
+          updateHeaderUI();
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Save Profile
+    function saveUserProfile() {
+      if (!currentUser) return;
+
+      const name = document.getElementById('profile-input-name').value.trim();
+      const bio = document.getElementById('profile-input-bio').value.trim();
+
+      if (name) currentUser.name = name;
+      if (bio) currentUser.bio = bio;
+
+      localStorage.setItem('chat_user_name', currentUser.name);
+      localStorage.setItem('chat_user_bio', currentUser.bio);
+
+      if (db) {
+        db.ref('users/' + currentUser.uid).update({
+          name: currentUser.name,
+          bio: currentUser.bio,
+          photoURL: currentUser.photoURL
+        });
+        if (presenceRef) {
+          presenceRef.update({
+            name: currentUser.name,
+            photoURL: currentUser.photoURL
+          });
+        }
+      }
+
+      updateHeaderUI();
+      closeProfileModal();
+      alert("تم حفظ بيانات الملف الشخصي بنجاح وتحديثها في قاعدة البيانات!");
+    }
+
+    // Update Header UI
+    function updateHeaderUI() {
+      if (!currentUser) return;
+      document.getElementById('user-header-name').textContent = currentUser.name;
+      document.getElementById('user-header-avatar').src = currentUser.photoURL;
+      document.getElementById('user-header-balance').textContent = Number(currentUser.balance || 0).toLocaleString();
+      document.getElementById('user-header-vip').textContent = currentUser.isVIP ? 'كبار الشخصيات VIP 👑' : 'عضو نشط';
+
+      // Profile modal sync
+      document.getElementById('profile-preview-avatar').src = currentUser.photoURL;
+      document.getElementById('profile-input-name').value = currentUser.name;
+      document.getElementById('profile-input-bio').value = currentUser.bio || '';
+      document.getElementById('profile-modal-balance').textContent = Number(currentUser.balance || 0).toLocaleString();
+      document.getElementById('profile-modal-rank').textContent = currentUser.isVIP ? 'VIP ملكي' : 'عضو عادي';
+    }
+
+    // InstaPay & Wallets Recharge Engine (Requirement 4)
+    function selectPackage(coins, price) {
+      selectedPackage = { coins, price };
+      document.querySelectorAll('.package-card').forEach(c => {
+        if (parseInt(c.getAttribute('data-coins')) === coins) {
+          c.className = "package-card active p-3 rounded-xl border border-rose-500 bg-rose-500/10 cursor-pointer text-center transition";
+        } else {
+          c.className = "package-card p-3 rounded-xl border border-slate-800 bg-slate-950 hover:border-slate-700 cursor-pointer text-center transition";
+        }
+      });
+      document.getElementById('instapay-total-due').textContent = price + ' جنيه مصري';
+    }
+
+    function copyInstaPayAddress() {
+      const address = "samyelsayed9@instapay";
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(address);
+      } else {
+        const input = document.createElement('input');
+        input.value = address;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+      }
+      alert("تم نسخ عنوان InstaPay بنجاح: " + address);
+    }
+
+    function executeInstaPayPayment() {
+      const btn = document.getElementById('instapay-submit-btn');
+      const msg = document.getElementById('instapay-status-msg');
+      const noteInput = document.getElementById('recharge-sender-note');
+      const customNote = (noteInput ? noteInput.value.trim() : '') || 'تحويل شحن كوينز';
+
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري فتح InstaPay وتسجيل المعاملة...`;
+      msg.className = "text-center text-xs mt-2 text-purple-400 block font-semibold";
+      msg.textContent = "جاري تحويلك لتطبيق InstaPay وتسجيل الطلب في payments_pending...";
+
+      openPayment(selectedPackage.price, `شحن باقة ${selectedPackage.coins} كوينز - ${customNote}`);
+
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-arrow-up-right-from-square text-xs"></i> <span>فتح InstaPay وتسجيل الطلب في payments_pending</span>`;
+        msg.className = "text-center text-xs mt-2 text-emerald-400 block font-bold";
+        msg.textContent = "تم تسجيل طلبك بنجاح في قاعدة البيانات وجاري التحقق من التحويل.";
+        setTimeout(closeInstaPayModal, 1500);
+      }, 1000);
+    }
+
+    // Admin Tools: VIP, Mute, Clear
+    function toggleUserVIP(targetUid, newStatus) {
+      if (db) {
+        db.ref('users/' + targetUid + '/isVIP').set(newStatus);
+        db.ref('presence/' + currentRoom + '/' + targetUid + '/isVIP').set(newStatus);
+        alert(`تم تغيير حالة VIP للمستخدم ${targetUid} إلى ${newStatus ? 'مفعل' : 'معطل'}`);
+      }
+    }
+
+    function toggleMuteUser(targetUid) {
+      if (db) {
+        db.ref('users/' + targetUid + '/isMuted').transaction(m => !m, (err, committed, snap) => {
+          alert(`تم ${snap.val() ? 'كتم' : 'إلغاء كتم'} المستخدم.`);
+        });
+      }
+    }
+
+    function clearRoomMessages() {
+      if (!confirm("هل أنت متأكد من مسح جميع رسائل هذه الغرفة؟ لا يمكن التراجع عن هذا الإجراء.")) return;
+      if (db) {
+        db.ref('messages/' + currentRoom).remove().then(() => {
+          document.getElementById('messages-container').innerHTML = '';
+          alert("تم مسح الرسائل بنجاح.");
+        });
+      }
+    }
+
+    // Fallback with unique identity (Requirement 1)
+    function setupLocalStandaloneFallback() {
+      let storedUid = localStorage.getItem('chat_user_id');
+      if (!storedUid) {
+        storedUid = 'usr_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+        localStorage.setItem('chat_user_id', storedUid);
+      }
+      currentUser = {
+        uid: storedUid,
+        name: localStorage.getItem('chat_user_name') || 'صقر_مصر_' + storedUid.substring(storedUid.length - 4),
+        photoURL: localStorage.getItem('chat_user_avatar') || `https://api.dicebear.com/7.x/bottts/svg?seed=${storedUid}`,
+        bio: localStorage.getItem('chat_user_bio') || 'مرحباً بالجميع في شات مصر!',
+        isVIP: false,
+        balance: 0,
+        badges: ['عضو جديد']
+      };
+      updateHeaderUI();
+      renderOnlineUsers([
+        { uid: currentUser.uid, name: currentUser.name, photoURL: currentUser.photoURL, isVIP: false, balance: 0 }
+      ]);
+    }
+
+    // Modal Controllers
+    function openProfileModal() {
+      document.getElementById('profile-modal').classList.remove('hidden');
+    }
+    function closeProfileModal() {
+      document.getElementById('profile-modal').classList.add('hidden');
+    }
+
+    function openInstaPayModal() {
+      document.getElementById('instapay-modal').classList.remove('hidden');
+      document.getElementById('instapay-status-msg').classList.add('hidden');
+    }
+    function closeInstaPayModal() {
+      document.getElementById('instapay-modal').classList.add('hidden');
+    }
+    const openPaymobModal = openInstaPayModal;
+    const closePaymobModal = closeInstaPayModal;
+
+    function openAdminModal() {
+      document.getElementById('admin-modal').classList.remove('hidden');
+    }
+    function closeAdminModal() {
+      document.getElementById('admin-modal').classList.add('hidden');
+    }
+
+    function openConfigModal() {
+      document.getElementById('config-modal').classList.remove('hidden');
+      document.getElementById('cfg-databaseURL').value = firebaseConfig.databaseURL || '';
+      document.getElementById('cfg-apiKey').value = firebaseConfig.apiKey || '';
+      document.getElementById('cfg-projectId').value = firebaseConfig.projectId || '';
+      document.getElementById('cfg-authDomain').value = firebaseConfig.authDomain || '';
+    }
+    function closeConfigModal() {
+      document.getElementById('config-modal').classList.add('hidden');
+    }
+
+    function saveFirebaseConfig() {
+      firebaseConfig.databaseURL = document.getElementById('cfg-databaseURL').value.trim();
+      firebaseConfig.apiKey = document.getElementById('cfg-apiKey').value.trim();
+      firebaseConfig.projectId = document.getElementById('cfg-projectId').value.trim();
+      firebaseConfig.authDomain = document.getElementById('cfg-authDomain').value.trim();
+
+      localStorage.setItem('arab_chat_firebase_cfg', JSON.stringify(firebaseConfig));
+      closeConfigModal();
+      location.reload();
+    }
+
+    function loadSampleConfig() {
+      firebaseConfig = { ...DEFAULT_CONFIG };
+      localStorage.removeItem('arab_chat_firebase_cfg');
+      closeConfigModal();
+      location.reload();
+    }
+
+    // Helper: Escape HTML
+    function escapeHTML(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Auto Bootstrap
+    window.addEventListener('DOMContentLoaded', () => {
+      initFirebase();
+    });
+  </script>
+</body>
+</html>

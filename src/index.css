@@ -1,0 +1,80 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  body {
+    font-family: 'Cairo', 'Tajawal', system-ui, -apple-system, sans-serif;
+  }
+}
+
+/* Custom smooth dark scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #080c15;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Sound wave animation */
+@keyframes soundwave {
+  0%, 100% { height: 4px; }
+  50% { height: 18px; }
+}
+
+.animate-soundwave-1 {
+  animation: soundwave 0.8s ease-in-out infinite;
+}
+.animate-soundwave-2 {
+  animation: soundwave 1.1s ease-in-out infinite 0.2s;
+}
+.animate-soundwave-3 {
+  animation: soundwave 0.7s ease-in-out infinite 0.4s;
+}
+.animate-soundwave-4 {
+  animation: soundwave 0.9s ease-in-out infinite 0.1s;
+}
+
+/* Luxury gift floating shimmer */
+@keyframes floatGift {
+  0% { transform: translateY(0) scale(0.9); opacity: 0; }
+  20% { transform: translateY(-10px) scale(1.1); opacity: 1; }
+  80% { transform: translateY(-20px) scale(1.05); opacity: 1; }
+  100% { transform: translateY(-40px) scale(0.95); opacity: 0; }
+}
+
+.animate-gift-float {
+  animation: floatGift 3.5s ease-out forwards;
+}
+
+/* WhatsApp-Style Chat Background with Repeating Doodle Pattern & Faded White Egyptian Pyramids Watermark */
+.room-chat-background {
+  position: relative;
+  background-color: #080c16;
+  background-image: 
+    radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.45) 0%, rgba(8, 12, 22, 0.95) 100%),
+    url("data:image/svg+xml,%3Csvg width='140' height='140' viewBox='0 0 140 140' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round' opacity='0.045'%3E%3Cpath d='M15 22h16a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4h-8l-5 4v-4h-3a4 4 0 0 1-4-4V26a4 4 0 0 1 4-4z'/%3E%3Ccircle cx='68' cy='24' r='8'/%3E%3Cpath d='M65 24h.01M71 24h.01' stroke-width='2'/%3E%3Cpath d='M65 27c.8.8 2.2.8 3 0'/%3E%3Cpath d='M110 18l12 7-12 7 3-6.5-3-7.5z'/%3E%3Cpath d='M18 70c2.5-4 7.5-4 10 0 2.5 4-2.5 8-5 10-2.5-2-7.5-6-5-10z'/%3E%3Cpath d='M62 65h16v12a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6V65zm16 4h4a3 3 0 0 1 0 6h-4M60 87h20'/%3E%3Cpath d='M112 60l2 4 4 1-3 3 1 4-4-2-4 2 1-4-3-3 4-1 2-4z'/%3E%3Cpath d='M25 115a7 7 0 1 0 0-14 7 7 0 0 0 0 14zm-4-7a3 3 0 1 1 6 0'/%3E%3Cpath d='M70 110l-10 6v-12l10 6zm0 0l10 6v-12l-10 6z'/%3E%3Ccircle cx='118' cy='112' r='7'/%3E%3Cpath d='M118 108v4l3 2'/%3E%3Cpath d='M40 38c0 3-3 5-3 5s3 2 3 5 2-5 2-5-2-2-2-5z'/%3E%3Cpath d='M95 38c2 0 4 2 4 4s-4 4-4 4-4-2-4-4 2-4 4-4z'/%3E%3Cpath d='M92 88c0 2-2 4-4 4s-4-2-4-4 2-4 4-4 4 2 4 4z'/%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: no-repeat, repeat;
+  background-size: cover, 140px 140px;
+}
+
+/* Faded White Egyptian Pyramids Silhouette Watermark (خلفية أهرامات مصر باهتة بالأبيض) */
+.room-chat-background::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 800 500' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.045' stroke='%23ffffff' stroke-opacity='0.08' stroke-width='1.5' stroke-linejoin='round'%3E%3C!-- Khufu (Great Pyramid) --%3E%3Cpolygon points='400,100 220,380 580,380' /%3E%3Cpolygon points='400,100 580,380 505,380 400,100' fill-opacity='0.065' /%3E%3Cpath d='M400,100 L445,380' stroke-dasharray='4,4' opacity='0.35' /%3E%3C!-- Khafre Pyramid --%3E%3Cpolygon points='225,160 85,380 365,380' /%3E%3Cpolygon points='225,160 365,380 300,380' fill-opacity='0.055' /%3E%3C!-- Menkaure Pyramid --%3E%3Cpolygon points='600,220 495,380 705,380' /%3E%3Cpolygon points='600,220 705,380 655,380' fill-opacity='0.055' /%3E%3C!-- Great Sphinx of Giza Silhouette --%3E%3Cpath d='M635,360 c-4,-12 -4,-28 16,-32 c16,-3 25,9 27,20 c12,0 38,6 44,17 c5,9 -2,17 -11,20 c-16,3 -72,3 -82,-3 c-6,-6 2,-17 6,-22 z' fill-opacity='0.06' /%3E%3Cpath d='M652,328 c0,0 12,-6 24,0 c2,8 -2,12 -8,14' fill='none' stroke-opacity='0.08' /%3E%3C!-- Desert Dunes and Horizon --%3E%3Cpath d='M0,380 Q 200,350 400,375 T 800,370 L 800,500 L 0,500 Z' fill-opacity='0.035' stroke='none' /%3E%3C!-- Night Sky Stars & Crescent --%3E%3Ccircle cx='385' cy='65' r='1.8' fill-opacity='0.16' /%3E%3Ccircle cx='465' cy='55' r='1.5' fill-opacity='0.14' /%3E%3Ccircle cx='330' cy='85' r='1.3' fill-opacity='0.14' /%3E%3Ccircle cx='540' cy='95' r='1.6' fill-opacity='0.15' /%3E%3Cpath d='M690,90 a18,18 0 0 1 14,25 a20,20 0 1 0 -14,-25' fill='%23ffffff' fill-opacity='0.08' stroke='none' /%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center bottom 20px;
+  background-size: min(650px, 92%) auto;
+}
+

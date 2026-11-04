@@ -1,0 +1,57 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User account and profile data",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 100 },
+        "username": { "type": "string", "maxLength": 50 },
+        "avatar": { "type": "string", "maxLength": 500 },
+        "bio": { "type": "string", "maxLength": 500 },
+        "country": { "type": "string", "maxLength": 100 },
+        "countryFlag": { "type": "string", "maxLength": 10 },
+        "role": { "type": "string", "maxLength": 30 },
+        "vipBadge": { "type": "string", "maxLength": 50 },
+        "coins": { "type": "number" },
+        "earningsEgp": { "type": "number" },
+        "earningsUsd": { "type": "number" },
+        "badges": { "type": "array" },
+        "ratingPoints": { "type": "number" },
+        "isBanned": { "type": "boolean" },
+        "isMuted": { "type": "boolean" },
+        "frameStyle": { "type": "string", "maxLength": 50 },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["id", "name"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Message sent in a chat room",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string", "maxLength": 2000 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "userName": { "type": "string", "maxLength": 100 },
+        "userAvatar": { "type": "string", "maxLength": 500 },
+        "userVipTier": { "type": "string", "maxLength": 50 },
+        "userVipBadge": { "type": "string", "maxLength": 50 },
+        "badges": { "type": "array" },
+        "type": { "type": "string", "maxLength": 30 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["text", "userId", "userName"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Public user profiles"
+    },
+    "/rooms/{roomId}/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Public room message feed"
+    }
+  }
+}

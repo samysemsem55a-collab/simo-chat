@@ -1,0 +1,27 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    match /rooms/{roomId}/messages/{messageId} {
+      allow read: if true;
+      allow create: if request.resource.data.text is string && request.resource.data.text.size() <= 2000;
+      allow update, delete: if false;
+    }
+
+    match /friendRequests/{requestId} {
+      allow read, write: if true;
+    }
+
+    match /transactions/{transactionId} {
+      allow read, write: if true;
+    }
+  }
+}
